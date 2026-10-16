@@ -268,7 +268,7 @@ button:disabled{cursor:default;opacity:.45}
 .cell:nth-last-child(-n+5){border-bottom:0}
 .cell.hit{background:var(--good-bg)}
 .cell.hit::after{content:"";position:absolute;top:5px;right:5px;width:12px;height:12px;border-radius:50%;background:var(--g4)}
-.cell.cur{background:var(--g2);box-shadow:inset 0 0 0 3px var(--ink);z-index:1}
+.cell.now{background:var(--g2);box-shadow:inset 0 0 0 3px var(--ink);z-index:1}
 .cell.read{color:var(--ink-3)}
 .ctable-wrap{position:relative}
 .c-count{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:6rem;color:var(--accent);background:var(--veil);border-radius:12px}
@@ -420,6 +420,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .stats .gom{width:12px;height:12px;margin-left:2px}
 .tips ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
 
+/* Réservé aux parents */
+.g-lock{display:flex;flex-direction:column;align-items:center;gap:2px;flex:none;font-family:var(--f-display);font-weight:700;font-size:.74rem;color:var(--ink-2)}
+.g-lock svg{width:22px;height:22px;color:var(--ink)}
+.lockbig{width:58px;height:58px;border-radius:50%;background:var(--g2);border:2px solid var(--ink);display:grid;place-items:center}
+.lockbig svg{width:28px;height:28px;color:var(--ink)}
+.gate-q{font-family:var(--f-display);font-size:1.6rem;white-space:nowrap}
+input.gate-in{width:140px;text-align:center;font-family:var(--f-display);font-weight:800;font-size:1.8rem}
+span.cell{display:grid;place-items:center;text-align:center}
+
 /* Installer sur l'écran d'accueil */
 .install{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;border:2px solid var(--ink);border-radius:20px;background:var(--paper);box-shadow:0 4px 0 var(--ink);text-align:left;min-height:76px}
 .install:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
@@ -568,6 +577,7 @@ const FX={ctx:null,
 const ICON={
   speak:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
   back:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  lock:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="currentColor"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
   check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
 function mascot(cls){return `<svg class="pastille ${cls||''}" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="52" r="42" class="p-body"/><path d="M74 16 A42 42 0 0 1 90 36 L77 34 Z" class="p-peel"/><ellipse cx="36" cy="46" rx="5.5" ry="7.5" class="p-eye"/><ellipse cx="64" cy="46" rx="5.5" ry="7.5" class="p-eye"/><circle cx="38" cy="43" r="2" class="p-glint"/><circle cx="66" cy="43" r="2" class="p-glint"/><circle cx="26" cy="62" r="6" class="p-cheek"/><circle cx="74" cy="62" r="6" class="p-cheek"/><path d="M38 64 Q50 76 62 64" class="p-smile"/></svg>`;}
@@ -620,7 +630,7 @@ const INFO={
   train:{t:'Le train des sons',f:'Assembler les lettres : f + a → fa',art:'<span>f<small>+</small>a</span>'},
   machine:{t:'La machine à syllabes',f:'Lire des syllabes et des mots rigolos',art:'<span>ru<br>fou</span>'},
   ecoute:{t:'Écoute et touche',f:'Retrouver dans le tableau la syllabe entendue',art:ICON.speak.replace('<svg','<svg style="width:22px;color:var(--lect)"')+'<span>lé</span>'},
-  chrono:{t:'Le chrono des syllabes',f:'Le tableau de la fiche, chronométré',art:'<span>0:42</span>'},
+  chrono:{t:'Le chrono des syllabes',f:'Le tableau de la fiche, chronométré, avec un parent',art:'<span>0:42</span>'},
   mots:{t:'Lis le mot',f:'Lire un mot et trouver son image',art:'<span>le<br>feu</span>'},
   lela:{t:'Le ou la ?',f:'Mots masculins et mots féminins',art:'<span>le<br>la</span>'},
   phrases:{t:'Lis la phrase',f:'Lire une phrase et trouver son image',art:'<span>Lulu<br>lit.</span>'},
@@ -636,7 +646,7 @@ const worldOf=id=>LECT.includes(id)?'lecture':'maths';
 const GAMES={};
 
 /* ---------- Défi du jour ---------- */
-function dailyList(){const d=today();let h=7;for(const ch of d)h=(h*31+ch.charCodeAt(0))>>>0;const l=LECT.filter(x=>x!=='chrono'&&x!=='machine');return [l[h%l.length],MATH[(h>>>4)%MATH.length],'chrono'];}
+function dailyList(){const d=today();let h=7;for(const ch of d)h=(h*31+ch.charCodeAt(0))>>>0;const l=LECT.filter(x=>x!=='chrono'&&x!=='machine');const a=l[h%l.length],l2=l.filter(x=>x!==a);return [a,MATH[(h>>>4)%MATH.length],l2[(h>>>8)%l2.length]];}
 function dailyState(){if(!S.daily||S.daily.date!==today())S.daily={date:today(),done:[],bonus:false};return S.daily;}
 function markGame(id,g){
   const r=S.games[id]||{n:0,best:0};r.n++;r.best=Math.max(r.best,Math.min(3,g));S.games[id]=r;
@@ -650,6 +660,22 @@ function checkUnlock(after){
   if(u>S.seen){const i=u-1;S.seen=u;save();
     setTimeout(()=>{modal(`<p class="eyebrow">Nouvelle image !</p><div class="rv-e">${IMAGES[i][0]}</div><h2>${IMAGES[i][1]}</h2><p>Elle est collée dans ton album.</p><button class="key primary" data-close>Super !</button>`,after);FX.win();confetti(50);V.say('Nouvelle image : '+IMAGES[i][1]);},900);
   }else if(after)after();
+}
+
+/* ---------- Réservé aux parents ---------- */
+const PARENT_ONLY=['chrono'];
+function openGame(id){if(PARENT_ONLY.includes(id))parentGate(()=>go('game',id));else go('game',id);}
+function parentGate(onOK,again){
+  const a=6+rnd(4),b=6+rnd(4);
+  modal(`<span class="lockbig">${ICON.lock}</span><p class="eyebrow">Réservé aux parents</p><h2>Demande à un adulte</h2><p>Combien font <b class="gate-q">${a} × ${b}</b> ?</p><input id="gate-in" class="gate-in" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" autocomplete="off" aria-label="Réponse"><p class="msg" id="gate-msg">${again?'Ce n’est pas ça. Voici une autre question.':''}</p><div class="btnrow"><button class="key" data-close>Annuler</button><button class="key primary" id="gate-ok">Valider</button></div>`);
+  const inp=$('#gate-in');try{inp.focus({preventScroll:true});}catch(e){}
+  const check=()=>{
+    if(!inp.value.trim())return;
+    if(parseInt(inp.value,10)===a*b){$('#modal').hidden=true;$('#mbox').innerHTML='';onOK();}
+    else{FX.bad();parentGate(onOK,true);}
+  };
+  $('#gate-ok').onclick=check;
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')check();});
 }
 
 /* ---------- Navigation ---------- */
@@ -690,8 +716,8 @@ function home(){
   </section>
   <section class="days"><p><b>${days}</b> ${plur(days,'jour')} d’entraînement</p><div class="days-row">${range(0,13).map(i=>`<span class="gom ${i<days?'':'empty'}" style="--c:var(--g${1+i%6})"></span>`).join('')}</div></section>
   <div id="install-slot"></div>`;
-  $$('[data-go]',app).forEach(b=>b.onclick=()=>go(b.dataset.go));
-  $$('[data-game]',app).forEach(b=>b.onclick=()=>go('game',b.dataset.game));
+  $$('[data-go]',app).forEach(b=>b.onclick=()=>{const t=b.dataset.go;if(t==='parents')parentGate(()=>go('parents'));else go(t);});
+  $$('[data-game]',app).forEach(b=>b.onclick=()=>openGame(b.dataset.game));
   drawInstall();
 }
 
@@ -727,8 +753,8 @@ window.addEventListener('appinstalled',()=>{installEvt=null;drawInstall();cheer(
 function menu(w){
   const ids=w==='lecture'?LECT:MATH;
   app.innerHTML=`${topbar(w==='lecture'?'Lecture':'Maths','home',w==='lecture'?'Les sons et syllabes du cahier, de la lettre à la phrase':'Les nombres jusqu’à 10, les calculs et les maisons')}
-  <div class="games">${ids.map((id,i)=>{const g=S.games[id];const best=g?g.best:0;return `<button class="gcard" data-game="${id}"><span class="g-art" style="--c:var(--g${1+i%6})">${INFO[id].art}</span><span class="g-txt"><span class="g-t">${INFO[id].t}</span><span class="g-f">${INFO[id].f}</span></span><span class="g-best" aria-label="Meilleur : ${best} gommettes">${[0,1,2].map(k=>`<span class="gom ${k<best?'':'empty'}" style="--c:var(--g${1+(i+k)%6})"></span>`).join('')}</span></button>`;}).join('')}</div>`;
-  wireBack();$$('[data-game]',app).forEach(b=>b.onclick=()=>go('game',b.dataset.game));
+  <div class="games">${ids.map((id,i)=>{const g=S.games[id];const best=g?g.best:0;return `<button class="gcard" data-game="${id}"><span class="g-art" style="--c:var(--g${1+i%6})">${INFO[id].art}</span><span class="g-txt"><span class="g-t">${INFO[id].t}</span><span class="g-f">${INFO[id].f}</span></span>${PARENT_ONLY.includes(id)?`<span class="g-lock">${ICON.lock}<span>Parent</span></span>`:`<span class="g-best" aria-label="Meilleur : ${best} gommettes">${[0,1,2].map(k=>`<span class="gom ${k<best?'':'empty'}" style="--c:var(--g${1+(i+k)%6})"></span>`).join('')}</span>`}</button>`;}).join('')}</div>`;
+  wireBack();$$('[data-game]',app).forEach(b=>b.onclick=()=>openGame(b.dataset.game));
 }
 
 function album(){
@@ -743,9 +769,9 @@ function album(){
 
 /* ---------- Coin des parents ---------- */
 function chronoHistory(){
-  if(!S.chrono.length)return '<p class="note">Pas encore de chrono. Le tableau de syllabes de la fiche se trouve dans « Le chrono des syllabes ».</p>';
+  if(!S.chrono.length)return '<p class="note">Pas encore de chrono. Votre enfant lit le tableau de syllabes de la fiche ; vous validez chaque syllabe bien lue.</p>';
   const best=Math.min(...S.chrono.map(c=>c.ms));const list=S.chrono.slice(-10).reverse();
-  return `<p><b>Record : ${fmtS(best)}</b> · ${S.chrono.length} ${plur(S.chrono.length,'essai')}</p><div class="tbl-wrap"><table class="stats"><thead><tr><th>Date</th><th>Sens</th><th class="n">Temps</th></tr></thead><tbody>${list.map(c=>`<tr><td>${frDate(c.d)}</td><td>${c.m==='c'?'colonnes':'lignes'}</td><td class="n">${fmtS(c.ms)}${c.ms===best?' (record)':''}</td></tr>`).join('')}</tbody></table></div>`;
+  return `<p><b>Record : ${fmtS(best)}</b> · ${S.chrono.length} ${plur(S.chrono.length,'essai')}</p><div class="tbl-wrap"><table class="stats"><thead><tr><th>Date</th><th>Sens</th><th class="n">Temps</th><th class="n">Erreurs</th></tr></thead><tbody>${list.map(c=>`<tr><td>${frDate(c.d)}</td><td>${c.m==='c'?'colonnes':'lignes'}</td><td class="n">${fmtS(c.ms)}${c.ms===best?' (record)':''}</td><td class="n">${c.e==null?'–':c.e}</td></tr>`).join('')}</tbody></table></div>`;
 }
 function parents(){
   const played=[...LECT,...MATH].filter(id=>S.games[id]);
@@ -764,11 +790,11 @@ function parents(){
     <div class="btnrow" style="justify-content:flex-start"><button class="key" id="p-test">${ICON.speak} Tester la voix</button></div>
     <label class="sw"><input type="checkbox" id="p-sfx" ${S.sfx?'checked':''}><span>Petits bruitages (bonne réponse, erreur, fanfare)</span></label>
   </section>
-  <section class="card"><h3>Chrono des syllabes</h3>${chronoHistory()}</section>
+  <section class="card"><h3>Chrono des syllabes</h3>${chronoHistory()}<div class="btnrow" style="justify-content:flex-start"><button class="key primary" id="p-chrono">${ICON.lock} Lancer le chrono</button></div></section>
   <section class="card"><h3>Activité</h3>${played.length?`<div class="tbl-wrap"><table class="stats"><thead><tr><th>Jeu</th><th class="n">Parties</th><th class="n">Meilleur</th></tr></thead><tbody>${played.map(id=>`<tr><td>${INFO[id].t}</td><td class="n">${S.games[id].n}</td><td class="n">${range(1,S.games[id].best).map(k=>`<span class="gom" style="--c:var(--g${k+2})"></span>`).join('')}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Aucune partie pour l’instant.</p>'}<p class="note">${S.gom} ${plur(S.gom,'gommette')} au total · ${S.days.length} ${plur(S.days.length,'jour')} d’entraînement.</p></section>
   <section class="card tips"><h3>Les conseils de la fiche</h3><ul>
     <li>Un peu chaque jour vaut mieux qu’une longue séance : 10 à 15 minutes suffisent.</li>
-    <li>Chrono : faites lire le tableau ligne par ligne, puis colonne par colonne. Votre enfant voit son temps baisser de jour en jour.</li>
+    <li>Chrono : il se lance d’ici, ou depuis Lecture après la question pour les parents. C’est vous qui touchez « Lu ! » à chaque syllabe bien lue, et « Erreur » sinon. Faites lire ligne par ligne, puis colonne par colonne : votre enfant voit son temps baisser de jour en jour.</li>
     <li>« La machine à syllabes » remplace le doigt qui montre une syllabe au hasard. « Écoute et touche » : on dit une syllabe, l’enfant la montre.</li>
     <li>Les lettres grises sont muettes : on ne les entend pas, comme dans le cahier.</li>
     <li>En maths, laissez manipuler (sauter sur la file, donner les bonbons, barrer les billes) avant de donner la réponse.</li>
@@ -780,6 +806,7 @@ function parents(){
   $('#p-rate').onchange=e=>{S.rate=+e.target.value;save();V.say('Voici ma nouvelle vitesse.');};
   $('#p-test').onclick=()=>{if(!V.ok){cheer('Pas de voix ici');return;}if(!S.voice){cheer('La voix est coupée');return;}V.say('Bonjour ! On lit : le loup, la roue, la fée.');};
   $('#p-sfx').onchange=e=>{S.sfx=e.target.checked;save();if(S.sfx)FX.good();};
+  $('#p-chrono').onclick=()=>go('game','chrono');
   $('#p-reset').onclick=()=>{
     const z=$('#p-zone');z.innerHTML='<button class="key danger" id="p-yes">Oui, tout effacer</button><button class="key" id="p-no">Annuler</button>';
     $('#p-no').onclick=()=>go('parents');
@@ -911,11 +938,11 @@ GAMES.ecoute=function(){
 };
 
 GAMES.chrono=function(){
-  const stage=frame('chrono',0);let mode='l',running=false,order=[],k=0,t0=0;
-  stage.innerHTML=`<section class="card prompt"><p class="hint">Lis les syllabes du tableau à voix haute, le plus vite possible sans te tromper. Touche chaque case jaune quand tu l’as lue.</p><div class="seg" id="c-mode" role="group" aria-label="Sens de lecture"><button data-m="l" aria-pressed="true">Ligne par ligne</button><button data-m="c" aria-pressed="false">Colonne par colonne</button></div></section>
-  <div class="c-bar"><span class="c-time" id="c-time">0 s</span><div class="c-track"><span class="c-run" id="c-run">${mascot('tiny')}</span></div></div>
-  <div class="ctable-wrap"><div class="ctable" id="ct">${FLAT.map((s,j)=>`<button class="cell" data-j="${j}">${s}</button>`).join('')}</div><div class="c-count" id="c-count" hidden></div></div>
-  <div class="btnrow"><button class="key primary big" id="c-go">C’est parti !</button><button class="key primary big" id="c-next" hidden>Suivante →</button><button class="key" id="c-stop" hidden>Arrêter</button></div>
+  const stage=frame('chrono',0);let mode='l',running=false,order=[],k=0,t0=0,errs=0;
+  stage.innerHTML=`<section class="card prompt"><p class="eyebrow">À faire avec un parent</p><p class="hint">L’enfant lit la syllabe jaune à voix haute, le plus vite possible. Le parent touche <b>«&nbsp;Lu&nbsp;!&nbsp;»</b> quand elle est bien lue, ou <b>«&nbsp;Erreur&nbsp;»</b>&nbsp;: l’enfant la relit.</p><div class="seg" id="c-mode" role="group" aria-label="Sens de lecture"><button data-m="l" aria-pressed="true">Ligne par ligne</button><button data-m="c" aria-pressed="false">Colonne par colonne</button></div></section>
+  <div class="c-bar"><span class="c-time" id="c-time">0 s</span><div class="c-track"><span class="c-run" id="c-run">${mascot('tiny')}</span></div><span class="tag" id="c-errn" hidden>0 erreur</span></div>
+  <div class="ctable-wrap"><div class="ctable" id="ct">${FLAT.map((s,j)=>`<span class="cell" data-j="${j}">${s}</span>`).join('')}</div><div class="c-count" id="c-count" hidden></div></div>
+  <div class="btnrow"><button class="key primary big" id="c-go">C’est parti !</button><button class="key primary big" id="c-next" hidden>${ICON.check} Lu !</button><button class="key big" id="c-err" hidden>Erreur</button><button class="key" id="c-stop" hidden>Arrêter</button></div>
   <section class="card"><div class="sec-h"><h3>Mes essais</h3><span class="tag" id="c-best"></span></div><div class="boxes" id="c-boxes"></div><div class="bars" id="c-bars"></div><p class="note" id="c-barnote"></p></section>`;
   const cells=$$('.cell',stage);
   const ord=m=>m==='l'?FLAT.map((_,j)=>j):range(0,4).flatMap(c=>range(0,6).map(r=>r*5+c));
@@ -929,23 +956,24 @@ GAMES.chrono=function(){
     $('#c-bars',stage).innerHTML=bars.length>1?bars.map(x=>`<span class="bar ${x.ms===best?'best':''}" style="height:${Math.max(8,Math.round(x.ms/mx*100))}%"></span>`).join(''):'';
     $('#c-barnote',stage).textContent=bars.length>1?'Plus la barre est petite, plus tu as lu vite.':'Ton temps s’inscrit ici après chaque lecture.';
   }
-  function paint(){cells.forEach((c,j)=>{const p=order.indexOf(j);c.classList.toggle('cur',running&&p===k);c.classList.toggle('read',running&&p>-1&&p<k);});$('#c-run',stage).style.setProperty('--p',String(order.length?k/order.length:0));}
+  function paint(){cells.forEach((c,j)=>{const p=order.indexOf(j);c.classList.toggle('now',running&&p===k);c.classList.toggle('read',running&&p>-1&&p<k);});$('#c-run',stage).style.setProperty('--p',String(order.length?k/order.length:0));}
   function tick(tok){if(tok!==TOK||!running)return;$('#c-time',stage).textContent=fmtS(performance.now()-t0);requestAnimationFrame(()=>tick(tok));}
-  function reset(){running=false;k=0;order=[];paint();$('#c-go',stage).hidden=false;$('#c-next',stage).hidden=true;$('#c-stop',stage).hidden=true;segB.forEach(b=>b.disabled=false);}
+  function reset(){running=false;k=0;order=[];paint();$('#c-go',stage).hidden=false;$('#c-next',stage).hidden=true;$('#c-err',stage).hidden=true;$('#c-errn',stage).hidden=true;$('#c-stop',stage).hidden=true;segB.forEach(b=>b.disabled=false);}
   $('#c-go',stage).onclick=()=>{
     if(running)return;order=ord(mode);k=0;segB.forEach(b=>b.disabled=true);$('#c-go',stage).hidden=true;$('#c-time',stage).textContent='0 s';
     const cnt=$('#c-count',stage);let c=3;cnt.hidden=false;cnt.textContent=c;FX.tick();
     const cd=every(()=>{c--;if(c>0){cnt.textContent=c;FX.tick();}else{stopEvery(cd);cnt.hidden=true;begin();}},800);
   };
-  function begin(){running=true;t0=performance.now();$('#c-next',stage).hidden=false;$('#c-stop',stage).hidden=false;paint();tick(TOK);FX.good();}
+  function begin(){running=true;errs=0;t0=performance.now();$('#c-next',stage).hidden=false;$('#c-err',stage).hidden=false;const en=$('#c-errn',stage);en.textContent='0 erreur';en.hidden=false;$('#c-stop',stage).hidden=false;paint();tick(TOK);FX.good();}
   function advance(){if(!running)return;k++;FX.tick();if(k>=order.length)end();else paint();}
-  cells.forEach(c=>c.onclick=()=>{if(running&&+c.dataset.j===order[k])advance();});
+  function oops(){if(!running)return;errs++;FX.bad();shake(cells[order[k]]);$('#c-errn',stage).textContent=errs+' '+plur(errs,'erreur');}
   $('#c-next',stage).onclick=advance;
+  $('#c-err',stage).onclick=oops;
   $('#c-stop',stage).onclick=()=>{reset();$('#c-time',stage).textContent='0 s';};
   function end(){
     const ms=Math.round(performance.now()-t0);running=false;
     const prevBest=S.chrono.length?Math.min(...S.chrono.map(x=>x.ms)):null;const prev=S.chrono.length?S.chrono[S.chrono.length-1].ms:null;
-    S.chrono.push({d:today(),ms,m:mode});
+    S.chrono.push({d:today(),ms,m:mode,e:errs});
     const rec=prevBest!==null&&ms<prevBest;const g=rec?2:1;const b=markGame('chrono',g);award(g+b);
     let msg;
     if(prevBest===null)msg='Premier essai ! Recommence demain pour voir tes progrès.';
@@ -954,7 +982,7 @@ GAMES.chrono=function(){
     else msg='Bien lu ! Continue chaque jour, tu vas aller de plus en plus vite.';
     reset();$('#c-time',stage).textContent=fmtS(ms);drawEssais();
     FX.win();if(rec)confetti(60);
-    modal(`${mascot('big bounce')}<p class="eyebrow">${mode==='l'?'Ligne par ligne':'Colonne par colonne'}</p><h2 class="mtime">${fmtS(ms)}</h2><p>${msg}</p><div class="gomrow">${range(1,g+b).map(j=>`<span class="gom big stick" style="--c:var(--g${j%6+1});animation-delay:${(j*.15).toFixed(2)}s"></span>`).join('')}</div><p class="note">+${g+b} ${plur(g+b,'gommette')}${b?', dont le défi du jour':''}</p><button class="key primary" data-close>OK</button>`,()=>checkUnlock());
+    modal(`${mascot('big bounce')}<p class="eyebrow">${mode==='l'?'Ligne par ligne':'Colonne par colonne'}</p><h2 class="mtime">${fmtS(ms)}</h2><p class="lead">${errs?errs+' '+plur(errs,'erreur'):'Sans erreur !'}</p><p>${msg}</p><div class="gomrow">${range(1,g+b).map(j=>`<span class="gom big stick" style="--c:var(--g${j%6+1});animation-delay:${(j*.15).toFixed(2)}s"></span>`).join('')}</div><p class="note">+${g+b} ${plur(g+b,'gommette')}${b?', dont le défi du jour':''}</p><button class="key primary" data-close>OK</button>`,()=>checkUnlock());
     V.say(msg);
   }
   drawEssais();paint();

@@ -2,7 +2,7 @@
    La page est cherchée sur internet d'abord (pour recevoir les mises à jour),
    puis dans la copie gardée sur le téléphone si le réseau manque.
    Changer VERSION à chaque mise à jour des fichiers. */
-const VERSION = 'gommettes-v1';
+const VERSION = 'gommettes-v2';
 const CORE = [
   './',
   './index.html',
