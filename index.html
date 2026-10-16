@@ -1,9 +1,22 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
-<title>Mon Cahier à Gommettes</title>
-<meta name="claude:viewport-fit-sides" content="cover">
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mon cahier à gommettes</title>
+<meta name="description" content="Cahier de vacances de CP : lecture et maths, avec des gommettes à gagner et un album à remplir.">
+<meta name="theme-color" content="#fdfdfb">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gommettes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Grandstander:wght@600;700;800&family=Playwrite+FR+Trad:wght@300;400&display=swap">
+<style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <style>
 /* Mise en page : une page de cahier en une colonne (max 760px). Lecture = papier Seyès, Maths = petits carreaux.
    Les écrans se remplacent dans #app ; tout se touche du doigt (cibles de 50px et plus). Thème clair assumé : c'est du papier. */
@@ -407,6 +420,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .stats .gom{width:12px;height:12px;margin-left:2px}
 .tips ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px}
 
+/* Installer sur l'écran d'accueil */
+.install{display:flex;align-items:center;gap:14px;width:100%;padding:12px 14px;border:2px solid var(--ink);border-radius:20px;background:var(--paper);box-shadow:0 4px 0 var(--ink);text-align:left;min-height:76px}
+.install:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.install img{width:52px;height:52px;border-radius:14px;border:2px solid var(--ink);flex:none}
+.inst-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.inst-t b{font-family:var(--f-display);font-weight:800;font-size:1.12rem}
+.inst-t span{font-size:.86rem;color:var(--ink-2)}
+.steps{margin:0;padding-left:1.3em;text-align:left;display:flex;flex-direction:column;gap:8px}
+
 /* Résultats, modale, toast, confettis */
 .result{align-items:center;text-align:center;gap:12px;padding:24px 16px}
 .result h2{font-size:clamp(1.9rem,8vw,2.7rem)}
@@ -437,6 +459,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   *,*::before,*::after{animation:none!important;transition:none!important}
 }
 </style>
+</head>
+<body>
 
 <div id="paper" aria-hidden="true"></div>
 <main class="app" id="app"></main>
@@ -664,10 +688,41 @@ function home(){
     <button class="tile" data-go="album"><span class="tile-art">${[0,1,2].map(i=>{const j=Math.max(0,unl-3)+i;return j<unl?`<span class="mini">${IMAGES[j][0]}</span>`:'<span class="mini locked">?</span>';}).join('')}</span><span class="tile-t">Mon album</span><span class="tile-s">${unl} / ${IMAGES.length} images</span></button>
     <button class="tile" data-go="parents"><span class="tile-art"><span class="cur">Parents</span></span><span class="tile-t">Coin des parents</span><span class="tile-s">chronos, voix, prénom</span></button>
   </section>
-  <section class="days"><p><b>${days}</b> ${plur(days,'jour')} d’entraînement</p><div class="days-row">${range(0,13).map(i=>`<span class="gom ${i<days?'':'empty'}" style="--c:var(--g${1+i%6})"></span>`).join('')}</div></section>`;
+  <section class="days"><p><b>${days}</b> ${plur(days,'jour')} d’entraînement</p><div class="days-row">${range(0,13).map(i=>`<span class="gom ${i<days?'':'empty'}" style="--c:var(--g${1+i%6})"></span>`).join('')}</div></section>
+  <div id="install-slot"></div>`;
   $$('[data-go]',app).forEach(b=>b.onclick=()=>go(b.dataset.go));
   $$('[data-game]',app).forEach(b=>b.onclick=()=>go('game',b.dataset.game));
+  drawInstall();
 }
+
+/* ---------- Installer sur le téléphone ---------- */
+let installEvt=null;
+const UA=navigator.userAgent||'';
+const isIOS=/iphone|ipad|ipod/i.test(UA)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isMobile=isIOS||/android|mobile/i.test(UA);
+function isInstalled(){try{return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true;}catch(e){return false;}}
+function drawInstall(){
+  const slot=$('#install-slot');if(!slot)return;
+  if(isInstalled()||!(installEvt||isMobile)){slot.innerHTML='';return;}
+  slot.innerHTML=`<button class="install" id="inst-b"><img src="icons/icon-192.png" alt=""><span class="inst-t"><b>Installer sur l’écran d’accueil</b><span>Le cahier s’ouvrira comme une appli, même sans internet.</span></span></button>`;
+  $('#inst-b').onclick=installNow;
+}
+function installNow(){
+  if(installEvt){
+    const ev=installEvt;installEvt=null;
+    try{ev.prompt();Promise.resolve(ev.userChoice).then(()=>drawInstall()).catch(()=>{});}catch(e){installHelp();}
+    return;
+  }
+  installHelp();
+}
+function installHelp(){
+  const steps=isIOS
+    ?'<li>Ouvre cette page dans <b>Safari</b>.</li><li>Touche le bouton <b>Partager</b> (le carré avec une flèche vers le haut).</li><li>Choisis <b>« Sur l’écran d’accueil »</b>, puis <b>Ajouter</b>.</li>'
+    :'<li>Ouvre le <b>menu du navigateur</b> (les trois points <b>⋮</b>, en haut à droite).</li><li>Touche <b>« Installer l’application »</b> ou <b>« Ajouter à l’écran d’accueil »</b>.</li><li>Confirme avec <b>Installer</b>.</li>';
+  modal(`<img src="icons/icon-192.png" alt="" style="width:76px;height:76px;border-radius:18px;border:2px solid var(--ink)"><h2>Installer le cahier</h2><ol class="steps">${steps}</ol><p class="note">L’icône Gommettes apparaîtra avec tes autres applis.</p><button class="key primary" data-close>J’ai compris</button>`);
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;drawInstall();});
+window.addEventListener('appinstalled',()=>{installEvt=null;drawInstall();cheer('Cahier installé !');});
 
 function menu(w){
   const ids=w==='lecture'?LECT:MATH;
@@ -1110,6 +1165,11 @@ GAMES.chat=function(){
 /* ---------- Démarrage ---------- */
 $('#toast').insertAdjacentHTML('afterbegin',mascot(''));
 go('home');
+
+// Copie sur le téléphone pour jouer sans internet (seulement sur le site publié)
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+}
 
 // Synchronisation des gommettes avec le compte (si disponible), sinon le navigateur suffit
 (async function(){
